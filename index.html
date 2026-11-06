@@ -1,0 +1,974 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="theme-color" content="#111522">
+  <title>별빛 아카데미 · 마법 도서관</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;600;700&display=swap');
+    :root { font-family:"DM Sans","Noto Sans KR",sans-serif; color:#f8f3e8; background:#101522; font-synthesis:none; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-width:320px; min-height:100vh; overflow:hidden; }
+    button { font:inherit; color:inherit; cursor:pointer; }
+    .app { position:relative; width:100vw; height:100dvh; overflow:hidden; background:radial-gradient(ellipse at 50% 35%,#374054,#111522 78%); }
+    #world { position:absolute; inset:0; width:100%; height:100%; display:block; touch-action:none; }
+    .vignette { position:absolute; inset:0; pointer-events:none; background:linear-gradient(180deg,#0d1222aa 0%,transparent 20%,transparent 63%,#0d1222be 100%); }
+    .topbar { position:absolute; z-index:2; top:0; left:0; right:0; min-height:60px; display:flex; align-items:center; gap:9px; padding:0 20px; border-bottom:1px solid #ffffff20; background:#121827c9; backdrop-filter:blur(16px); }
+    .logo { display:flex; align-items:center; justify-content:center; width:34px; height:34px; margin-right:3px; border:1px solid #dbbd78a0; border-radius:50%; color:#f1d897; font-size:17px; text-decoration:none; }
+    .brand { margin-right:auto; font-size:13px; font-weight:700; letter-spacing:.2px; white-space:nowrap; }
+    .top-button { min-height:34px; padding:0 13px; border:1px solid #ffffff2a; border-radius:999px; background:#ffffff0b; color:#f5efdf; font-size:11px; font-weight:600; }
+    .top-button:hover { border-color:#d6bd7a; background:#ffffff16; }
+    .status { position:absolute; z-index:1; top:78px; left:50%; transform:translateX(-50%); display:flex; align-items:center; gap:10px; white-space:nowrap; padding:9px 15px; border:1px solid #ffffff24; border-radius:99px; background:#121827b5; color:#f4ead2; font-size:11px; backdrop-filter:blur(10px); }
+    .status strong { color:#f0d48d; }
+    .status-dot { width:7px; height:7px; border-radius:50%; background:#96c89d; box-shadow:0 0 10px #96c89d; }
+    .room-note { position:absolute; z-index:1; top:124px; left:50%; transform:translateX(-50%); color:#e7d8b7; font-size:10px; text-shadow:0 2px 6px #000; white-space:nowrap; }
+    .timer-card { position:absolute; z-index:1; top:45%; left:50%; transform:translate(-50%,-50%); min-width:200px; padding:15px 20px; border:1px solid #e6d3a344; border-radius:16px; background:#1118279c; text-align:center; backdrop-filter:blur(10px); box-shadow:0 12px 40px #0003; pointer-events:none; }
+    .timer-caption { color:#dfd3b8; font-size:10px; }
+    .timer { margin-top:3px; color:#f3dc9f; font-size:30px; font-weight:600; letter-spacing:2px; font-variant-numeric:tabular-nums; }
+    .phase { margin-top:3px; color:#d5c9ad; font-size:10px; }
+    .bottom { position:absolute; z-index:2; bottom:17px; left:50%; transform:translateX(-50%); width:min(660px,calc(100% - 32px)); }
+    .focus-callout { display:block; width:max-content; max-width:100%; margin:0 auto 10px; padding:11px 20px; border:1px solid #f5df9b70; border-radius:99px; background:linear-gradient(110deg,#f0d992,#d7b86d); box-shadow:0 8px 26px #0005; color:#292319; font-size:12px; font-weight:700; }
+    .focus-callout:hover { filter:brightness(1.07); }
+    .hint { margin:0 auto 10px; color:#f0e9d8; font-size:10px; text-align:center; text-shadow:0 2px 5px #000; }
+    .toolbar { display:flex; justify-content:center; align-items:center; gap:4px; padding:7px; border:1px solid #ffffff26; border-radius:17px; background:#111725d9; backdrop-filter:blur(15px); box-shadow:0 8px 30px #0004; }
+    .tool { display:flex; align-items:center; justify-content:center; gap:7px; min-height:38px; padding:0 15px; border:0; border-radius:11px; background:transparent; color:#e8e2d4; font-size:11px; }
+    .tool:hover,.tool.on { background:#ffffff16; color:#f1d58e; }
+    .tool-icon { color:#e4c978; font-size:15px; }
+    .zoom { position:absolute; z-index:2; right:19px; bottom:120px; display:grid; gap:7px; }
+    .zoom button { width:37px; height:37px; border:1px solid #ffffff35; border-radius:50%; background:#131a2abf; font-size:20px; backdrop-filter:blur(8px); }
+    .toast { position:absolute; z-index:4; left:50%; bottom:102px; transform:translate(-50%,12px); padding:10px 15px; border:1px solid #e7d19045; border-radius:99px; background:#f6f0df; color:#303326; box-shadow:0 5px 20px #0004; font-size:11px; opacity:0; pointer-events:none; transition:.22s; white-space:nowrap; }
+    .toast.show { transform:translate(-50%,0); opacity:1; }
+    .modal-backdrop { position:absolute; z-index:5; inset:0; display:none; align-items:center; justify-content:center; padding:20px; background:#090c15bd; backdrop-filter:blur(6px); }
+    .modal-backdrop.open { display:flex; }
+    .modal { width:min(420px,100%); padding:23px; border:1px solid #e9d39956; border-radius:20px; background:#1b2030; color:#f5efdf; box-shadow:0 25px 80px #0007; }
+    .modal-head { display:flex; align-items:center; justify-content:space-between; }
+    .modal h2 { margin:0; font-size:18px; }
+    .close { width:32px; height:32px; border:0; border-radius:50%; background:#ffffff15; color:#f5efdf; font-size:18px; }
+    .modal p { color:#c1bba9; font-size:11px; line-height:1.6; }
+    .room-options { display:grid; gap:9px; margin-top:17px; }
+    .room-option { display:flex; justify-content:space-between; align-items:center; padding:13px 14px; border:1px solid #ffffff20; border-radius:12px; background:#ffffff08; color:#f5efdf; text-align:left; }
+    .room-option:hover,.room-option.current { border-color:#ddc27d; background:#e4ce8d12; }
+    .room-option small { color:#c6bda8; font-size:10px; }
+    .audio-note { margin:14px 0 0; color:#bdb39b; font-size:10px; text-align:center; }
+    .feature-modal { width:min(440px,100%); }
+    .chat-messages { display:grid; gap:9px; max-height:260px; overflow:auto; margin:15px 0; padding:2px; }
+    .chat-empty { padding:18px 12px; border:1px dashed #ffffff2a; border-radius:12px; color:#c6bda8; font-size:11px; line-height:1.6; text-align:center; }
+    .chat-message { justify-self:start; max-width:90%; padding:9px 12px; border-radius:12px 12px 12px 3px; background:#ffffff10; font-size:11px; line-height:1.5; overflow-wrap:anywhere; }
+    .chat-message.mine { justify-self:end; border-radius:12px 12px 3px 12px; background:#d8bf7b24; }
+    .chat-author { display:block; margin-bottom:3px; color:#d7c27f; font-size:9px; }
+    .chat-form { display:flex; gap:7px; }
+    .chat-form input { min-width:0; flex:1; padding:11px 12px; border:1px solid #ffffff26; border-radius:10px; outline:none; background:#111725; color:#f5efdf; font:inherit; font-size:11px; }
+    .chat-form input:focus { border-color:#ddc27d; }
+    .chat-form button { padding:0 15px; border:0; border-radius:10px; background:#e2c77f; color:#292319; font-size:11px; font-weight:700; }
+    .local-note { margin:11px 0 0; color:#bdb39b; font-size:10px; line-height:1.5; }
+    .record-summary { display:grid; grid-template-columns:repeat(2,1fr); gap:9px; margin:16px 0; }
+    .record-stat { padding:14px; border:1px solid #ffffff1a; border-radius:13px; background:#ffffff08; }
+    .record-stat span { display:block; color:#c6bda8; font-size:10px; }
+    .record-stat strong { display:block; margin-top:7px; color:#f0d48d; font-size:20px; font-variant-numeric:tabular-nums; }
+    .history-list { display:grid; gap:8px; }
+    .history-row { display:flex; justify-content:space-between; color:#e4dece; font-size:11px; }
+    .history-row span:last-child { color:#c6bda8; }
+    @media(max-width:600px) {
+      .topbar { min-height:54px; gap:6px; padding:0 9px; }
+      .brand { font-size:11px; }
+      .logo { width:30px; height:30px; }
+      .top-button { min-height:31px; padding:0 9px; font-size:10px; }
+      .status { top:66px; gap:7px; padding:8px 11px; font-size:10px; }
+      .room-note { top:108px; font-size:9px; }
+      .timer-card { top:31%; min-width:166px; padding:10px 15px; }
+      .timer { font-size:26px; }
+      .bottom { bottom:10px; width:calc(100% - 20px); }
+      .focus-callout { margin-bottom:8px; padding:10px 15px; font-size:11px; }
+      .hint { margin-bottom:8px; font-size:9px; }
+      .toolbar { justify-content:space-around; gap:0; padding:5px; border-radius:15px; }
+      .tool { flex:1; min-width:0; min-height:37px; gap:4px; padding:0 3px; font-size:10px; white-space:nowrap; }
+      .tool-icon { font-size:14px; }
+      .zoom { right:10px; top:51%; bottom:auto; }
+      .zoom button { width:33px; height:33px; }
+    }
+    @media(max-width:370px) {
+      .topbar { gap:4px; }
+      .brand { display:none; }
+      .top-button { padding:0 8px; }
+      .tool { padding:0 2px; font-size:9px; }
+      .tool-icon { display:none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <canvas id="world" aria-label="별빛 아카데미의 마법 도서관 3D 공간"></canvas>
+    <div class="vignette"></div>
+    <header class="topbar">
+      <a class="logo" href="#" aria-label="별빛 아카데미">✧</a>
+      <span class="brand">별빛 아카데미 · 마법 도서관</span>
+      <button class="top-button" id="chatBtn" type="button">대화 <span id="chatCount">12</span></button>
+      <button class="top-button" id="recordBtn" type="button">기록</button>
+      <button class="top-button" id="greetBtn" type="button">인사</button>
+      <button class="top-button" id="roomsBtn" type="button">공간 이동</button>
+    </header>
+    <div class="status"><span class="status-dot"></span><strong id="roomName">천문 도서관</strong><span>·</span><span>함께 공부 <b id="peopleCount">20</b>명</span><span>·</span><span>집중 <b>21분</b></span></div>
+    <div class="room-note">오늘의 별빛 기록 <strong>✦ 20</strong>　·　서로의 집중을 응원해요</div>
+    <section class="timer-card" aria-label="공동 집중 타이머">
+      <div class="timer-caption" id="timerCaption">집중 사이클 준비 완료</div>
+      <div class="timer" id="timer">50:00</div>
+      <div class="phase" id="phase">50분 집중 · 10분 휴식</div>
+    </section>
+    <div class="zoom" aria-label="화면 확대">
+      <button type="button" id="zoomIn" aria-label="가까이">＋</button>
+      <button type="button" id="zoomOut" aria-label="멀리">－</button>
+    </div>
+    <div class="bottom">
+      <button class="focus-callout" id="sitBtn" type="button">✧　빈자리를 선택해 자리에 앉기　✧</button>
+      <p class="hint">바닥을 클릭하면 걸어가요 · 빈 의자를 클릭하면 자리에 앉아요 · 드래그로 둘러보기</p>
+      <div class="toolbar" aria-label="도서관 도구">
+        <button class="tool" id="studyBtn" type="button"><span class="tool-icon">◷</span><span>공부 시작</span></button>
+        <button class="tool" id="lampBtn" type="button"><span class="tool-icon">✧</span><span>마법등 켜짐</span></button>
+        <button class="tool" id="soundBtn" type="button"><span class="tool-icon">♫</span><span>별빛 소리</span></button>
+        <button class="tool" id="viewBtn" type="button"><span class="tool-icon">◎</span><span>내 자리</span></button>
+      </div>
+    </div>
+    <div class="toast" id="toast" role="status"></div>
+    <div class="modal-backdrop" id="modal">
+      <section class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <div class="modal-head"><h2 id="modalTitle">어떤 공간에서 공부할까요?</h2><button class="close" id="closeModal" aria-label="닫기">×</button></div>
+        <p>별빛 아카데미의 공간을 골라 이동해요.</p>
+        <div class="room-options" id="roomOptions"></div>
+        <div class="audio-note">모든 공간은 오리지널 콘셉트로 만들었어요.</div>
+      </section>
+    </div>
+    <div class="modal-backdrop" id="featureModal">
+      <section class="modal feature-modal" role="dialog" aria-modal="true" aria-labelledby="featureTitle">
+        <div class="modal-head"><h2 id="featureTitle"></h2><button class="close" id="closeFeature" aria-label="닫기">×</button></div>
+        <div id="featureContent"></div>
+      </section>
+    </div>
+    <div id="threeFallback" style="display:none;position:absolute;inset:50% auto auto 50%;transform:translate(-50%,-50%);padding:16px 20px;border-radius:14px;background:#111827e8;color:#fff;text-align:center;font-size:12px;z-index:6;">3D 공간을 불러오지 못했어요.<br>인터넷 연결을 확인하고 새로고침해 주세요.</div>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js"></script>
+  <script>
+    (() => {
+      if (!window.THREE) {
+        document.querySelector("#threeFallback").style.display = "block";
+        return;
+      }
+
+      const THREE = window.THREE;
+      const canvas = document.querySelector("#world");
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color("#121827");
+      scene.fog = new THREE.FogExp2("#171b29", .024);
+      const camera = new THREE.PerspectiveCamera(48, 1, .1, 100);
+      camera.position.set(0, 5.3, 12.5);
+      const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:false });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      renderer.outputColorSpace = THREE.SRGBColorSpace;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = .82;
+      const clock = new THREE.Clock();
+
+      const ambient = new THREE.HemisphereLight("#ccd9ff", "#453326", .8);
+      scene.add(ambient);
+      const moon = new THREE.DirectionalLight("#c6d3ff", 1);
+      moon.position.set(-5, 11, 6);
+      moon.castShadow = true;
+      moon.shadow.mapSize.set(1024, 1024);
+      scene.add(moon);
+      const warmFill = new THREE.PointLight("#ffc76b", 12, 13);
+      warmFill.position.set(0, 4.1, 1);
+      scene.add(warmFill);
+
+      const mat = (color, roughness=.8, metalness=0) => new THREE.MeshStandardMaterial({ color, roughness, metalness });
+      const stone = mat("#4b4d60");
+      const stoneLight = mat("#777487");
+      const floorMat = mat("#2c2327", .72);
+      const wood = mat("#6a422d");
+      const woodTop = mat("#9a6940");
+      const gold = mat("#d4ae63", .4, .45);
+      const bookMat = ["#6e4050","#435a70","#727148","#986640"].map(color => mat(color));
+      const glassMat = new THREE.MeshBasicMaterial({ color:"#658eb9", transparent:true, opacity:.72, side:THREE.DoubleSide });
+      const candleMat = new THREE.MeshStandardMaterial({ color:"#ffe5a0", emissive:"#ffbe54", emissiveIntensity:2.4 });
+      const floor = new THREE.Mesh(new THREE.PlaneGeometry(26, 30), floorMat);
+      floor.rotation.x = -Math.PI / 2;
+      floor.position.set(0, 0, -3);
+      floor.receiveShadow = true;
+      scene.add(floor);
+
+      const boxes = [];
+      const seats = [];
+      const candles = [];
+      const playerAvatar = makeCharacter("#526b75","#334b66");
+      const avatarScale=.72;
+      playerAvatar.position.set(0,0,.7);
+      playerAvatar.scale.setScalar(avatarScale);
+      scene.add(playerAvatar);
+      const roomSets = [
+        { name:"천문 도서관", count:20, wall:"#424456", window:"#6f8db6", glow:"#d7b767" },
+        { name:"달빛 서고", count:8, wall:"#39494a", window:"#75a1a1", glow:"#a9dbcf" },
+        { name:"구름 온실", count:12, wall:"#414e43", window:"#7ea88b", glow:"#b3d78b" },
+        { name:"수정 연구실", count:5, wall:"#48445b", window:"#9d83bf", glow:"#d1a2e8" }
+      ];
+      let roomIndex = 0;
+      let selectedSeat = null;
+      let seated = false;
+      let lampOn = true;
+      let studyRunning = false;
+      let timerMode = "focus";
+      let soundOn = false;
+      let seconds = 50 * 60;
+      let timerId = null;
+      let toastId = null;
+      let zoom = 9.5;
+      let targetX = 0;
+      let targetY = 2.1;
+      let drag = null;
+      let moveTarget = null;
+      let sitTransition = null;
+      let walkClock = 0;
+      let audioContext = null;
+      let audioNodes = [];
+      const progressKey = "starlight-academy.progress.v1";
+      let persistenceWarningShown = false;
+
+      function dateKey(date=new Date()) {
+        return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")}`;
+      }
+      function loadProgress() {
+        try {
+          const value=localStorage.getItem(progressKey);
+          if(!value)return { days:{}, messages:[] };
+          const parsed=JSON.parse(value);
+          if(!parsed || typeof parsed!=="object" || !parsed.days || typeof parsed.days!=="object" || !Array.isArray(parsed.messages)) {
+            throw new Error("Stored study data has an invalid shape");
+          }
+          const days=Object.fromEntries(Object.entries(parsed.days)
+            .filter(([key,entry])=>/^\d{4}-\d{2}-\d{2}$/.test(key) && entry && typeof entry==="object")
+            .map(([key,entry])=>[key,{
+              focusSeconds:Number.isFinite(entry.focusSeconds)?Math.max(0,Math.floor(entry.focusSeconds)):0,
+              completedSessions:Number.isFinite(entry.completedSessions)?Math.max(0,Math.floor(entry.completedSessions)):0
+            }]));
+          return { days, messages:parsed.messages };
+        } catch(error) {
+          console.error("Could not load local study data.",error);
+          showToast("저장된 기록을 읽지 못했어요. 새 기록으로 시작합니다.");
+          return { days:{}, messages:[] };
+        }
+      }
+      let progress=loadProgress();
+      progress.messages=progress.messages.filter(message=>
+        message && typeof message.text==="string" && typeof message.time==="string"
+      ).slice(-80);
+      function saveProgress() {
+        try {
+          localStorage.setItem(progressKey,JSON.stringify(progress));
+          return true;
+        } catch(error) {
+          console.error("Could not save local study data.",error);
+          if(!persistenceWarningShown) {
+            persistenceWarningShown=true;
+            showToast("브라우저 저장공간 문제로 기록을 저장하지 못했어요.");
+          }
+          return false;
+        }
+      }
+      function todayProgress() {
+        const key=dateKey();
+        if(!progress.days[key])progress.days[key]={focusSeconds:0,completedSessions:0};
+        return progress.days[key];
+      }
+      function formatDuration(secondsTotal) {
+        const minutes=Math.floor(secondsTotal/60);
+        const hours=Math.floor(minutes/60);
+        return hours ? `${hours}시간 ${minutes%60}분` : `${minutes}분`;
+      }
+      function currentStreak() {
+        const cursor=new Date();
+        if(!(progress.days[dateKey(cursor)]?.focusSeconds>0))cursor.setDate(cursor.getDate()-1);
+        let streak=0;
+        while(progress.days[dateKey(cursor)]?.focusSeconds>0) {
+          streak++;
+          cursor.setDate(cursor.getDate()-1);
+        }
+        return streak;
+      }
+      function recordFocusSecond() {
+        todayProgress().focusSeconds++;
+        if(!saveProgress())return;
+        if(document.querySelector("#featureModal").classList.contains("open"))renderRecord();
+      }
+      function renderRecord() {
+        const today=todayProgress();
+        const history=Array.from({length:7},(_,index)=>{
+          const date=new Date();
+          date.setDate(date.getDate()-index);
+          const entry=progress.days[dateKey(date)];
+          const label=index===0?"오늘":new Intl.DateTimeFormat("ko-KR",{month:"numeric",day:"numeric",weekday:"short"}).format(date);
+          return `<div class="history-row"><span>${label}</span><span>${formatDuration(entry?.focusSeconds||0)}</span></div>`;
+        }).join("");
+        document.querySelector("#featureTitle").textContent="나의 공부 기록";
+        document.querySelector("#featureContent").innerHTML=
+          `<div class="record-summary">
+            <div class="record-stat"><span>오늘 집중한 시간</span><strong>${formatDuration(today.focusSeconds)}</strong></div>
+            <div class="record-stat"><span>완료한 집중 사이클</span><strong>${today.completedSessions}회</strong></div>
+            <div class="record-stat"><span>연속 공부일</span><strong>${currentStreak()}일</strong></div>
+            <div class="record-stat"><span>누적 집중 시간</span><strong>${formatDuration(Object.values(progress.days).reduce((sum,entry)=>sum+(entry.focusSeconds||0),0))}</strong></div>
+          </div><div class="history-list">${history}</div>
+          <p class="local-note">기록은 이 브라우저에만 저장됩니다.</p>`;
+      }
+      function renderChat() {
+        document.querySelector("#featureTitle").textContent="열람실 대화";
+        document.querySelector("#featureContent").innerHTML=
+          `<div class="chat-messages" id="chatMessages"></div>
+          <form class="chat-form" id="chatForm"><input id="chatInput" maxlength="120" autocomplete="off" placeholder="조용히 응원을 남겨보세요" aria-label="응원 메시지"><button type="submit">보내기</button></form>
+          <p class="local-note">이 대화는 현재 이 브라우저 안에서만 보여요. 다른 사람과 주고받는 실시간 대화는 서버 연결 후 제공됩니다.</p>`;
+        const messagesElement=document.querySelector("#chatMessages");
+        if(progress.messages.length===0) {
+          const empty=document.createElement("div");
+          empty.className="chat-empty";
+          empty.textContent="아직 남겨진 메시지가 없어요. 먼저 조용한 응원을 건네볼까요?";
+          messagesElement.append(empty);
+        }
+        for(const message of progress.messages) {
+          const bubble=document.createElement("div");
+          bubble.className=`chat-message${message.author==="나"?" mine":""}`;
+          const author=document.createElement("span");
+          author.className="chat-author";
+          author.textContent=message.author==="나"?"나 · "+message.time:"알림 · "+message.time;
+          bubble.append(author,document.createTextNode(message.text));
+          messagesElement.append(bubble);
+        }
+        messagesElement.scrollTop=messagesElement.scrollHeight;
+        document.querySelector("#chatCount").textContent=String(progress.messages.length);
+      }
+      function sendMessage(text) {
+        const clean=text.trim().slice(0,120);
+        if(!clean)return;
+        progress.messages.push({
+          author:"나",
+          text:clean,
+          time:new Intl.DateTimeFormat("ko-KR",{hour:"2-digit",minute:"2-digit"}).format(new Date())
+        });
+        progress.messages=progress.messages.slice(-80);
+        saveProgress();
+        renderChat();
+        document.querySelector("#chatInput").focus();
+      }
+
+      function box(w,h,d,material,x,y,z,cast=true,receive=true) {
+        const mesh = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), material);
+        mesh.position.set(x,y,z);
+        mesh.castShadow = cast;
+        mesh.receiveShadow = receive;
+        scene.add(mesh);
+        boxes.push(mesh);
+        return mesh;
+      }
+      function cylinder(rt,rb,h,material,x,y,z,segments=12) {
+        const mesh = new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,segments), material);
+        mesh.position.set(x,y,z);
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        scene.add(mesh);
+        boxes.push(mesh);
+        return mesh;
+      }
+      function addArch(x,z,height=7,width=2.5) {
+        const pillarGeo = new THREE.BoxGeometry(.32,height,width*.13);
+        for (const side of [-1,1]) {
+          const pillar = new THREE.Mesh(pillarGeo, stoneLight);
+          pillar.position.set(x + side*width*.43,height/2,z);
+          pillar.castShadow = true;
+          scene.add(pillar); boxes.push(pillar);
+          const capital = new THREE.Mesh(new THREE.BoxGeometry(.58,.26,.56), gold);
+          capital.position.set(x + side*width*.43,height-.13,z);
+          scene.add(capital); boxes.push(capital);
+        }
+        const arch = new THREE.Mesh(new THREE.TorusGeometry(width*.43,.18,8,24,Math.PI), stoneLight);
+        arch.position.set(x,height,z);
+        arch.rotation.z = Math.PI;
+        arch.castShadow = true;
+        scene.add(arch); boxes.push(arch);
+      }
+      function addWindow(x,z,width,height,glassColor) {
+        const glass = new THREE.Mesh(new THREE.PlaneGeometry(width,height), new THREE.MeshBasicMaterial({ color:glassColor, transparent:true, opacity:.67, side:THREE.DoubleSide }));
+        glass.position.set(x,height/2+1,z);
+        scene.add(glass); boxes.push(glass);
+        const frameMat = gold;
+        box(.12,height+.25,.16,frameMat,x-width/2, height/2+1,z-.02,false,false);
+        box(.12,height+.25,.16,frameMat,x+width/2, height/2+1,z-.02,false,false);
+        box(width+.24,.12,.16,frameMat,x,height+1,z-.02,false,false);
+        box(width+.24,.12,.16,frameMat,x,1,z-.02,false,false);
+        box(.09,height,.18,frameMat,x,height/2+1,z-.11,false,false);
+        box(width,.09,.18,frameMat,x,height/2+1,z-.11,false,false);
+      }
+      function addShelf(x,z) {
+        const shelf = new THREE.Group();
+        shelf.position.set(x,.05,z);
+        const sideMat = wood;
+        const side1 = new THREE.Mesh(new THREE.BoxGeometry(.18,4.2,.65),sideMat); side1.position.set(-1.35,2.1,0);
+        const side2 = side1.clone(); side2.position.x=1.35;
+        shelf.add(side1,side2);
+        for (let row=0; row<4; row++) {
+          const y=.42+row*1.03;
+          const plank = new THREE.Mesh(new THREE.BoxGeometry(2.85,.13,.75),woodTop); plank.position.set(0,y,0); shelf.add(plank);
+          for(let i=0;i<7;i++){
+            const bw=.16+Math.random()*.1, bh=.52+Math.random()*.32;
+            const book=new THREE.Mesh(new THREE.BoxGeometry(bw,bh,.48),bookMat[(i+row*3)%bookMat.length]);
+            book.position.set(-1.1+i*.36,y+bh/2+.07,.02);
+            book.rotation.z=(Math.random()-.5)*.11;
+            book.castShadow=true;
+            shelf.add(book);
+          }
+        }
+        shelf.traverse(object=>{if(object.isMesh){object.castShadow=true;object.receiveShadow=true;}});
+        scene.add(shelf); boxes.push(shelf);
+      }
+      function makeCharacter(robeColor, hatColor=robeColor) {
+        const character=new THREE.Group();
+        const body=new THREE.Group();
+        character.userData.bob=body;
+        character.add(body);
+        const robe=new THREE.Mesh(new THREE.SphereGeometry(.46,16,14),mat(robeColor));
+        robe.position.y=.67;
+        robe.scale.set(1,1.2,.82);
+        body.add(robe);
+        const hem=new THREE.Mesh(new THREE.TorusGeometry(.34,.035,8,18),gold);
+        hem.rotation.x=Math.PI/2;
+        hem.position.y=.2;
+        body.add(hem);
+        const collar=new THREE.Mesh(new THREE.SphereGeometry(.31,16,12),mat("#ead9b4"));
+        collar.scale.set(1,.32,.72);
+        collar.position.set(0,1.08,0);
+        body.add(collar);
+        const head=new THREE.Mesh(new THREE.SphereGeometry(.34,20,16),mat("#f0c99d"));
+        head.scale.set(1,1.03,.86);
+        head.position.set(0,1.48,.025);
+        body.add(head);
+        const hair=new THREE.Mesh(new THREE.SphereGeometry(.345,18,12,0,Math.PI*2,0,Math.PI*.52),mat("#563b33"));
+        hair.scale.set(1,.82,.9);
+        hair.position.set(0,1.62,0);
+        body.add(hair);
+        const eyeWhite=mat("#fff5e3",.35);
+        const eyeDark=mat("#302c36",.3);
+        for(const side of [-1,1]) {
+          const eye=new THREE.Mesh(new THREE.SphereGeometry(.065,12,10),eyeWhite);
+          eye.scale.z=.48;
+          eye.position.set(side*.12,1.5,.293);
+          body.add(eye);
+          const pupil=new THREE.Mesh(new THREE.SphereGeometry(.037,10,8),eyeDark);
+          pupil.position.set(side*.12,1.495,.324);
+          body.add(pupil);
+          const shine=new THREE.Mesh(new THREE.SphereGeometry(.012,8,6),mat("#ffffff",.2));
+          shine.position.set(side*.12-.012,1.514,.35);
+          body.add(shine);
+          const cheek=new THREE.Mesh(new THREE.SphereGeometry(.055,10,8),new THREE.MeshBasicMaterial({color:"#ed9b91",transparent:true,opacity:.65}));
+          cheek.scale.set(1,.55,.3);
+          cheek.position.set(side*.215,1.405,.267);
+          body.add(cheek);
+          const arm=new THREE.Group();
+          const sleeve=new THREE.Mesh(new THREE.SphereGeometry(.14,12,10),mat(robeColor));
+          sleeve.scale.set(.82,1.35,.8);
+          sleeve.position.y=-.12;
+          arm.add(sleeve);
+          const hand=new THREE.Mesh(new THREE.SphereGeometry(.095,12,10),mat("#f0c99d"));
+          hand.position.y=-.29;
+          arm.add(hand);
+          arm.position.set(side*.39,.86,0);
+          body.add(arm);
+          character.userData.arms ||= [];
+          character.userData.arms.push(arm);
+          const foot=new THREE.Mesh(new THREE.SphereGeometry(.14,12,8),mat("#d7c5a5"));
+          foot.scale.set(1,.58,1.45);
+          foot.position.set(side*.16,.12,.1);
+          character.add(foot);
+          character.userData.feet ||= [];
+          character.userData.feet.push(foot);
+        }
+        const smilePoints=[
+          new THREE.Vector3(-.055,1.365,.32),
+          new THREE.Vector3(0,1.34,.34),
+          new THREE.Vector3(.055,1.365,.32)
+        ];
+        const smileCurve=new THREE.CatmullRomCurve3(smilePoints);
+        body.add(new THREE.Mesh(new THREE.TubeGeometry(smileCurve,8,.012,5,false),eyeDark));
+        const hatBrim=new THREE.Mesh(new THREE.CylinderGeometry(.37,.37,.075,20),mat(hatColor,.65));
+        hatBrim.position.y=1.84;
+        body.add(hatBrim);
+        const hat=new THREE.Mesh(new THREE.ConeGeometry(.28,.65,12),mat(hatColor,.65));
+        hat.position.set(0,2.18,0);
+        hat.rotation.z=-.12;
+        body.add(hat);
+        const star=new THREE.Mesh(new THREE.OctahedronGeometry(.075,0),gold);
+        star.position.set(.13,1.96,.21);
+        body.add(star);
+        body.traverse(object=>{if(object.isMesh){object.castShadow=true;object.receiveShadow=true;}});
+        return character;
+      }
+      function addTable(x,z,index) {
+        const group = new THREE.Group();
+        group.position.set(x,0,z);
+        const top = new THREE.Mesh(new THREE.BoxGeometry(2.55,.16,1.22),woodTop);
+        top.position.y=1.45; top.castShadow=true; top.receiveShadow=true; group.add(top);
+        const rim = new THREE.Mesh(new THREE.BoxGeometry(2.62,.07,1.28),gold); rim.position.y=1.35; group.add(rim);
+        for(const lx of [-1.04,1.04]) for(const lz of [-.42,.42]){
+          const leg=new THREE.Mesh(new THREE.BoxGeometry(.13,1.36,.13),wood);
+          leg.position.set(lx,.68,lz); leg.castShadow=true; group.add(leg);
+        }
+        const book = new THREE.Mesh(new THREE.BoxGeometry(.53,.1,.38),bookMat[index%bookMat.length]);
+        book.position.set(-.42,1.59,-.11); book.rotation.y=-.16; book.castShadow=true; group.add(book);
+        const page=new THREE.Mesh(new THREE.BoxGeometry(.45,.018,.32),mat("#e6d8b9"));
+        page.position.set(-.42,1.65,-.11); page.rotation.y=-.16; group.add(page);
+        const candleLight = new THREE.PointLight(roomSets[roomIndex].glow, lampOn ? 4 : 0, 4.3);
+        candleLight.position.set(.66,2.05,.08); group.add(candleLight); candles.push(candleLight);
+        const flame = new THREE.Mesh(new THREE.SphereGeometry(.095,10,8),candleMat);
+        flame.scale.set(.7,1.4,.7); flame.position.set(.66,1.88,.08); group.add(flame);
+        const candle = new THREE.Mesh(new THREE.CylinderGeometry(.065,.08,.28,10),mat("#dfd5ba"));
+        candle.position.set(.66,1.68,.08); group.add(candle);
+        const chair = new THREE.Group();
+        const chairWood=wood;
+        const seat = new THREE.Mesh(new THREE.BoxGeometry(.82,.15,.76),chairWood); seat.position.set(0,.64,1.05); seat.castShadow=true; chair.add(seat);
+        const back = new THREE.Mesh(new THREE.BoxGeometry(.82,.28,.13),chairWood); back.position.set(0,.81,1.38); back.castShadow=true; chair.add(back);
+        for(const cx of [-.31,.31]){
+          const support=new THREE.Mesh(new THREE.BoxGeometry(.1,.65,.1),chairWood); support.position.set(cx,.33,1.05); chair.add(support);
+          const spindle=new THREE.Mesh(new THREE.BoxGeometry(.09,.28,.1),gold); spindle.position.set(cx,.82,1.3); chair.add(spindle);
+        }
+        const occupant=makeCharacter(["#526b75","#655a75","#775846","#4a665a"][index%4]);
+        occupant.position.set(0,0,1.02);
+        occupant.scale.set(.68,.58,.68);
+        occupant.visible=index%3!==1;
+        const seatIndex=seats.length;
+        const seatMarker=new THREE.Mesh(
+          new THREE.OctahedronGeometry(.13,0),
+          new THREE.MeshStandardMaterial({color:"#f5d477",emissive:"#b57d2d",emissiveIntensity:1.5,metalness:.25,roughness:.35})
+        );
+        seatMarker.position.set(0,2.05,1.05);
+        seatMarker.visible=index%3===1;
+        seatMarker.userData.seatIndex=seatIndex;
+        group.add(chair,occupant,seatMarker);
+        group.traverse(object=>{if(object.isMesh){object.castShadow=true;object.receiveShadow=true;}});
+        scene.add(group); boxes.push(group);
+        chair.userData.seatIndex=seatIndex;
+        seats.push({ group, chair, occupant, seatMarker, available:index%3===1 });
+      }
+      function clearWorld() {
+        for(const object of boxes) {
+          scene.remove(object);
+          object.traverse?.(child=>{
+            if(child.geometry) child.geometry.dispose();
+            if(child.material) {
+              const materials=Array.isArray(child.material)?child.material:[child.material];
+              materials.forEach(material=>material.dispose());
+            }
+          });
+        }
+        boxes.length=0; seats.length=0; candles.length=0;
+      }
+      function buildRoom() {
+        clearWorld();
+        const config=roomSets[roomIndex];
+        scene.fog.color.set(roomIndex===1?"#15222d":roomIndex===2?"#1b2b23":roomIndex===3?"#21192d":"#171b29");
+        ambient.color.set(roomIndex===2?"#d5e7cc":"#ccd9ff");
+        warmFill.color.set(config.glow);
+        const wallMaterial=mat(config.wall);
+        const sideWall=box(.5,8,24,wallMaterial,-8,4,-3);
+        sideWall.receiveShadow=true;
+        box(.5,8,24,wallMaterial,8,4,-3);
+        box(16,8,.5,wallMaterial,0,4,-15);
+        box(16,.45,.6,stoneLight,0,8,-14.7);
+        for(let i=-1;i<=1;i++) {
+          addArch(i*4.5,-14.4,6.6,2.6);
+          addWindow(i*4.5,-14.1,1.75,4.7,config.window);
+        }
+        for(const i of [-1,1]) {
+          const column=cylinder(.28,.39,8,stone,i*6.8,4,-4.5,12);
+          column.position.y=4;
+          cylinder(.42,.42,.3,gold,i*6.8,7.7,-4.5,12);
+          addArch(i*6.8,-4.5,7.9,2.6);
+        }
+        for(let i=0;i<4;i++) {
+          addShelf(-5.7+(i%2)*11.4,-12.1+Math.floor(i/2)*2.3);
+        }
+        for(let i=0;i<7;i++) addTable(-6.1+(i%3)*6.1,-8.7+Math.floor(i/3)*3.25,i);
+        const chandelier = new THREE.Group();
+        const chain=cylinder(.035,.035,1.4,gold,0,7.8,-5,8);
+        const ring=new THREE.Mesh(new THREE.TorusGeometry(1.05,.065,8,24),gold);
+        ring.rotation.x=Math.PI/2; ring.position.set(0,6.9,-5); chandelier.add(ring);
+        for(let i=0;i<8;i++){
+          const angle=i*Math.PI/4;
+          const candle=new THREE.Mesh(new THREE.CylinderGeometry(.055,.065,.35,8),mat("#e8dec5"));
+          candle.position.set(Math.cos(angle)*1.02,7.13,-5+Math.sin(angle)*1.02); chandelier.add(candle);
+          const glow=new THREE.PointLight("#ffd38b",4,5);
+          glow.position.set(Math.cos(angle)*1.02,7.42,-5+Math.sin(angle)*1.02); chandelier.add(glow); candles.push(glow);
+        }
+        scene.add(chandelier); boxes.push(chandelier,chain);
+        for(let i=0;i<38;i++){
+          const particle=new THREE.Mesh(new THREE.SphereGeometry(.025+Math.random()*.035,6,6),new THREE.MeshBasicMaterial({color:i%3===0?"#ffe09a":"#b9c9ed",transparent:true,opacity:.8}));
+          particle.position.set((Math.random()-.5)*15,1+Math.random()*6,-12+Math.random()*15);
+          particle.userData={float:Math.random()*Math.PI*2};
+          scene.add(particle); boxes.push(particle);
+        }
+        selectedSeat=null; seated=false; moveTarget=null; sitTransition=null;
+        playerAvatar.position.set(0,0,.7);
+        playerAvatar.scale.setScalar(avatarScale);
+        playerAvatar.rotation.y=0;
+        playerAvatar.userData.bob.position.y=0;
+        document.querySelector("#peopleCount").textContent=String(config.count);
+        updateSeatButton();
+      }
+
+      function resize() {
+        const width=canvas.clientWidth, height=canvas.clientHeight;
+        if(!width||!height)return;
+        renderer.setSize(width,height,false);
+        camera.aspect=width/height;
+        camera.updateProjectionMatrix();
+      }
+      function showToast(message) {
+        const toast=document.querySelector("#toast");
+        toast.textContent=message;
+        toast.classList.add("show");
+        clearTimeout(toastId);
+        toastId=setTimeout(()=>toast.classList.remove("show"),2100);
+      }
+      function updateSeatButton() {
+        const button=document.querySelector("#sitBtn");
+        if(seated) button.textContent="✓　내 자리에서 일어나기";
+        else if(sitTransition) button.textContent="✧　의자에 앉는 중…";
+        else if(moveTarget && selectedSeat!==null) button.textContent="✧　의자까지 이동 중…";
+        else if(moveTarget) button.textContent="✧　캐릭터 이동 중…";
+        else button.textContent="✧　빈자리로 걸어가기　✧";
+      }
+      function stopSitting() {
+        if(!seated)return;
+        seated=false;
+        sitTransition=null;
+        playerAvatar.scale.setScalar(avatarScale);
+        playerAvatar.userData.bob.position.y=0;
+        playerAvatar.rotation.y=0;
+        playerAvatar.userData.arms.forEach(arm=>{arm.rotation.z=0;});
+        document.querySelector("#peopleCount").textContent=String(roomSets[roomIndex].count);
+      }
+      function walkTo(point,seatIndex=null) {
+        if(seated)stopSitting();
+        sitTransition=null;
+        if(seatIndex!==null) {
+          selectedSeat=seatIndex;
+          seats[seatIndex].occupant.visible=false;
+        } else selectedSeat=null;
+        const destination=point.clone();
+        destination.y=0;
+        destination.x=THREE.MathUtils.clamp(destination.x,-7.2,7.2);
+        destination.z=THREE.MathUtils.clamp(destination.z,-12.5,4.2);
+        if(seatIndex!==null)destination.z=seats[seatIndex].group.position.z+2.1;
+        moveTarget=destination;
+        updateSeatButton();
+        showToast(seatIndex===null?"걸어갈게요!":"빈자리를 향해 걸어가요!");
+      }
+      function finishWalking() {
+        moveTarget=null;
+        if(selectedSeat!==null && seats[selectedSeat]) {
+          const seat=seats[selectedSeat];
+          seat.seatMarker.visible=false;
+          sitTransition={
+            elapsed:0,
+            from:playerAvatar.position.clone(),
+            to:new THREE.Vector3(seat.group.position.x,.61,seat.group.position.z+1.48)
+          };
+          playerAvatar.userData.bob.position.y=0;
+          playerAvatar.rotation.y=0;
+          playerAvatar.userData.arms.forEach((arm,index)=>{arm.rotation.z=(index===0?-1:1)*.12;});
+          showToast("의자를 당겨 앉는 중…");
+        } else {
+          showToast("도착했어요!");
+        }
+        updateSeatButton();
+      }
+      function sitDown() {
+        if(seated) {
+          selectedSeat=null;
+          stopSitting();
+          moveTarget=null;
+          showToast("자리에서 일어났어요. 좋은 하루 보내세요!");
+        } else if(moveTarget) {
+          moveTarget=null;
+          selectedSeat=null;
+          showToast("이동을 멈췄어요.");
+        } else {
+          const first=seats.findIndex(seat=>seat.available);
+          if(first>=0) {
+            const seat=seats[first];
+            walkTo(new THREE.Vector3(seat.group.position.x,0,seat.group.position.z+1.75),first);
+          }
+        }
+        updateSeatButton();
+      }
+      const raycaster=new THREE.Raycaster();
+      const pointer=new THREE.Vector2();
+      function handleWorldClick(event) {
+        const rect=canvas.getBoundingClientRect();
+        pointer.x=((event.clientX-rect.left)/rect.width)*2-1;
+        pointer.y=-((event.clientY-rect.top)/rect.height)*2+1;
+        raycaster.setFromCamera(pointer,camera);
+        const seatTarget=seats.map((seat,index)=>{
+          if(!seat.available)return null;
+          const anchor=seat.group.localToWorld(new THREE.Vector3(0,1.5,1.05));
+          anchor.project(camera);
+          const x=(anchor.x*.5+.5)*rect.width;
+          const y=(-anchor.y*.5+.5)*rect.height;
+          return {index,distance:Math.hypot(event.clientX-rect.left-x,event.clientY-rect.top-y)};
+        }).filter(Boolean).sort((a,b)=>a.distance-b.distance)[0];
+        if(seatTarget && seatTarget.distance<38) {
+          const seat=seats[seatTarget.index];
+          walkTo(new THREE.Vector3(seat.group.position.x,0,seat.group.position.z+2.1),seatTarget.index);
+          return;
+        }
+        const targets=[...seats.filter(seat=>seat.available).flatMap(seat=>[seat.chair,seat.seatMarker]),floor];
+        const hit=raycaster.intersectObjects(targets,true)[0];
+        if(!hit) { showToast("바닥이나 빈자리를 눌러 이동해보세요."); return; }
+        let object=hit.object;
+        while(object && !Number.isInteger(object.userData.seatIndex))object=object.parent;
+        if(object) {
+          const index=object.userData.seatIndex;
+          const seat=seats[index];
+          seat.seatMarker.visible=false;
+          walkTo(new THREE.Vector3(seat.group.position.x,0,seat.group.position.z+1.75),index);
+          return;
+        }
+        if(hit.object!==floor) { showToast("이쪽으로는 갈 수 없어요."); return; }
+        walkTo(hit.point);
+      }
+      function startAudio() {
+        const AudioContext=window.AudioContext||window.webkitAudioContext;
+        if(!AudioContext) { showToast("이 브라우저에서는 배경음을 재생할 수 없어요."); return false; }
+        audioContext=new AudioContext();
+        const master=audioContext.createGain();
+        master.gain.value=.045;
+        master.connect(audioContext.destination);
+        const low=audioContext.createOscillator(), high=audioContext.createOscillator();
+        low.type="sine"; low.frequency.value=110;
+        high.type="sine"; high.frequency.value=164.81;
+        const lowGain=audioContext.createGain(), highGain=audioContext.createGain();
+        lowGain.gain.value=.55; highGain.gain.value=.18;
+        low.connect(lowGain); lowGain.connect(master);
+        high.connect(highGain); highGain.connect(master);
+        low.start(); high.start();
+        audioNodes=[low,high,master];
+        const notes=[392,440,523.25,659.25];
+        let noteIndex=0;
+        const chime=()=>{
+          if(!soundOn||!audioContext)return;
+          const osc=audioContext.createOscillator(), gain=audioContext.createGain();
+          osc.type="sine"; osc.frequency.value=notes[noteIndex++%notes.length];
+          gain.gain.setValueAtTime(.0001,audioContext.currentTime);
+          gain.gain.exponentialRampToValueAtTime(.035,audioContext.currentTime+.12);
+          gain.gain.exponentialRampToValueAtTime(.0001,audioContext.currentTime+2.6);
+          osc.connect(gain); gain.connect(master);
+          osc.start(); osc.stop(audioContext.currentTime+2.7);
+          setTimeout(chime,9000+Math.random()*8000);
+        };
+        setTimeout(chime,3500);
+        return true;
+      }
+      function toggleAudio() {
+        soundOn=!soundOn;
+        if(soundOn) {
+          if(!audioContext) {
+            if(!startAudio()) { soundOn=false; return; }
+          } else audioContext.resume();
+        } else if(audioContext) audioContext.suspend();
+        const button=document.querySelector("#soundBtn");
+        button.querySelector("span:last-child").textContent=soundOn?"별빛 소리 켜짐":"별빛 소리";
+        button.classList.toggle("on",soundOn);
+        showToast(soundOn?"오리지널 별빛 앰비언스를 재생해요.":"배경음을 잠시 멈췄어요.");
+      }
+      function formatTime() {
+        document.querySelector("#timer").textContent=`${String(Math.floor(seconds/60)).padStart(2,"0")}:${String(seconds%60).padStart(2,"0")}`;
+      }
+
+      canvas.addEventListener("pointerdown",event=>{
+        drag={x:event.clientX,y:event.clientY,moved:false};
+        canvas.setPointerCapture(event.pointerId);
+      });
+      canvas.addEventListener("pointermove",event=>{
+        if(!drag)return;
+        const dx=event.clientX-drag.x, dy=event.clientY-drag.y;
+        if(Math.abs(dx)+Math.abs(dy)>5)drag.moved=true;
+        if(drag.moved) {
+          targetX-=dx*.009;
+          targetY=Math.max(.5,Math.min(5,targetY+dy*.018));
+          drag.x=event.clientX; drag.y=event.clientY;
+        }
+      });
+      canvas.addEventListener("pointerup",event=>{
+        if(drag&&!drag.moved)handleWorldClick(event);
+        drag=null;
+      });
+      canvas.addEventListener("pointercancel",()=>{drag=null;});
+      canvas.addEventListener("wheel",event=>{
+        event.preventDefault();
+        zoom=Math.max(7,Math.min(19,zoom+event.deltaY*.012));
+      },{passive:false});
+      document.querySelector("#zoomIn").addEventListener("click",()=>zoom=Math.max(7,zoom-.8));
+      document.querySelector("#zoomOut").addEventListener("click",()=>zoom=Math.min(19,zoom+.8));
+      document.querySelector("#viewBtn").addEventListener("click",()=>{
+        targetX=0; targetY=2.1; zoom=seated?7.5:9.5;
+        showToast(seated?"내 자리 쪽으로 시점을 돌렸어요.":"도서관 전체를 바라봐요.");
+      });
+      document.querySelector("#sitBtn").addEventListener("click",sitDown);
+      document.querySelector("#recordBtn").addEventListener("click",()=>{
+        renderRecord();
+        document.querySelector("#featureModal").classList.add("open");
+      });
+      document.querySelector("#lampBtn").addEventListener("click",event=>{
+        lampOn=!lampOn;
+        candles.forEach(light=>{light.intensity=lampOn?4:0;});
+        warmFill.intensity=lampOn?12:0;
+        event.currentTarget.querySelector("span:last-child").textContent=lampOn?"마법등 켜짐":"마법등 꺼짐";
+        event.currentTarget.classList.toggle("on",lampOn);
+        showToast(lampOn?"마법등을 밝혔어요.":"마법등을 잠시 껐어요.");
+      });
+      document.querySelector("#soundBtn").addEventListener("click",toggleAudio);
+      document.querySelector("#studyBtn").addEventListener("click",()=>{
+        if(!seated) { showToast("먼저 빈자리를 선택하고 앉아주세요."); return; }
+        studyRunning=!studyRunning;
+        const button=document.querySelector("#studyBtn");
+        button.classList.toggle("on",studyRunning);
+        if(studyRunning&&!timerId) {
+          timerId=setInterval(()=>{
+            if(timerMode==="focus")recordFocusSecond();
+            seconds--;
+            if(seconds<=0) {
+              if(timerMode==="focus") {
+                todayProgress().completedSessions++;
+                saveProgress();
+                timerMode="break";
+                seconds=10*60;
+                document.querySelector("#timerCaption").textContent="집중 완료 · 이제 휴식 시간";
+                button.querySelector("span:last-child").textContent="휴식 중";
+                document.querySelector("#phase").textContent="집중 완료 · 10분 쉬어가요";
+                showToast("50분 집중 완료! 10분 휴식 시간이에요.");
+              } else {
+                timerMode="focus";
+                seconds=50*60;
+                document.querySelector("#timerCaption").textContent="새로운 집중 사이클";
+                button.querySelector("span:last-child").textContent="집중 중";
+                document.querySelector("#phase").textContent="새로운 집중 사이클을 시작해요";
+                showToast("휴식이 끝났어요. 다음 집중을 시작해볼까요?");
+              }
+            }
+            formatTime();
+          },1000);
+        } else if(!studyRunning&&timerId) { clearInterval(timerId); timerId=null; }
+        button.querySelector("span:last-child").textContent=studyRunning?(timerMode==="focus"?"집중 중":"휴식 중"):"다시 시작";
+        if(studyRunning) {
+          document.querySelector("#timerCaption").textContent=timerMode==="focus"?"지금 다 같이 집중 중":"지금은 함께 쉬는 시간";
+          document.querySelector("#phase").textContent=timerMode==="focus"?"50분 집중 · 지금 이 순간에 집중해요":"10분 휴식 · 편하게 쉬어가요";
+        } else {
+          document.querySelector("#timerCaption").textContent="타이머 일시정지";
+          document.querySelector("#phase").textContent=timerMode==="focus"?"집중을 잠시 멈췄어요":"휴식을 잠시 멈췄어요";
+        }
+        showToast(studyRunning?"집중을 시작했어요. 응원할게요!":"잠시 멈췄어요. 숨을 고르고 다시 시작해요.");
+      });
+      document.querySelector("#greetBtn").addEventListener("click",()=>showToast("✧ 따뜻한 응원의 별빛을 보냈어요."));
+      document.querySelector("#chatBtn").addEventListener("click",()=>{
+        renderChat();
+        document.querySelector("#featureModal").classList.add("open");
+      });
+
+      const modal=document.querySelector("#modal");
+      const featureModal=document.querySelector("#featureModal");
+      document.querySelector("#closeFeature").addEventListener("click",()=>featureModal.classList.remove("open"));
+      featureModal.addEventListener("click",event=>{if(event.target===featureModal)featureModal.classList.remove("open");});
+      document.querySelector("#featureContent").addEventListener("submit",event=>{
+        if(event.target.id!=="chatForm")return;
+        event.preventDefault();
+        sendMessage(document.querySelector("#chatInput").value);
+      });
+      function openRooms() {
+        document.querySelector("#roomOptions").innerHTML=roomSets.map((room,index)=>
+          `<button class="room-option ${index===roomIndex?"current":""}" type="button" data-index="${index}"><span>${room.name}<br><small>${["높은 창과 오래된 책이 있는 도서관","달빛이 내려앉는 비밀 서고","별빛 식물이 자라는 유리 온실","수정 구체가 빛나는 연구실"][index]}</small></span><small>${index===roomIndex?"이용 중":room.count+"명 공부 중"}</small></button>`
+        ).join("");
+        modal.classList.add("open");
+      }
+      document.querySelector("#roomsBtn").addEventListener("click",openRooms);
+      document.querySelector("#closeModal").addEventListener("click",()=>modal.classList.remove("open"));
+      modal.addEventListener("click",event=>{if(event.target===modal)modal.classList.remove("open");});
+      document.querySelector("#roomOptions").addEventListener("click",event=>{
+        const button=event.target.closest("[data-index]");
+        if(!button)return;
+        roomIndex=Number(button.dataset.index);
+        document.querySelector("#roomName").textContent=roomSets[roomIndex].name;
+        document.querySelector("#peopleCount").textContent=roomSets[roomIndex].count;
+        buildRoom();
+        modal.classList.remove("open");
+        showToast(`${roomSets[roomIndex].name}(으)로 이동했어요.`);
+      });
+      window.addEventListener("keydown",event=>{
+        if(event.key==="Escape") {
+          modal.classList.remove("open");
+          featureModal.classList.remove("open");
+        }
+      });
+      document.querySelector("#chatCount").textContent=String(progress.messages.length);
+      window.addEventListener("resize",resize);
+      buildRoom();
+      resize();
+
+      function animate(time) {
+        requestAnimationFrame(animate);
+        const delta=Math.min(clock.getDelta(),.05);
+        camera.position.x+=(Math.sin(targetX)*zoom-camera.position.x)*.045;
+        camera.position.z+=(Math.cos(targetX)*zoom-camera.position.z)*.045;
+        camera.position.y+=(targetY+zoom*.08-camera.position.y)*.045;
+        camera.lookAt(0,targetY, -4.5);
+        if(sitTransition) {
+          sitTransition.elapsed+=delta;
+          const progress=Math.min(1,sitTransition.elapsed/.7);
+          const eased=progress*progress*(3-2*progress);
+          playerAvatar.position.lerpVectors(sitTransition.from,sitTransition.to,eased);
+          playerAvatar.scale.set(avatarScale,THREE.MathUtils.lerp(avatarScale,avatarScale*1.12,eased),avatarScale);
+          if(progress>=1) {
+            sitTransition=null;
+            seated=true;
+            playerAvatar.rotation.y=0;
+            document.querySelector("#peopleCount").textContent=String(roomSets[roomIndex].count+1);
+            showToast("의자에 앉았어요. 함께 집중해요!");
+            updateSeatButton();
+          }
+        } else if(moveTarget) {
+          const dx=moveTarget.x-playerAvatar.position.x;
+          const dz=moveTarget.z-playerAvatar.position.z;
+          const distance=Math.hypot(dx,dz);
+          if(distance<.08) {
+            playerAvatar.position.x=moveTarget.x;
+            playerAvatar.position.z=moveTarget.z;
+            finishWalking();
+          } else {
+            const step=Math.min(distance,2.4*delta);
+            playerAvatar.position.x+=dx/distance*step;
+            playerAvatar.position.z+=dz/distance*step;
+            playerAvatar.rotation.y=Math.atan2(dx,dz);
+            walkClock+=delta*10;
+            playerAvatar.userData.bob.position.y=Math.sin(walkClock*2.2)*.045;
+            playerAvatar.userData.arms.forEach((arm,index)=>{arm.rotation.x=Math.sin(walkClock+(index*Math.PI))* .38;});
+            playerAvatar.userData.feet.forEach((foot,index)=>{foot.position.z=.1+Math.sin(walkClock+(index*Math.PI))*.055;});
+          }
+        } else if(!seated) {
+          playerAvatar.userData.bob.position.y=Math.sin(time*.0018)*.018;
+          playerAvatar.userData.arms.forEach(arm=>{arm.rotation.x=0;});
+          playerAvatar.userData.feet.forEach((foot,index)=>{foot.position.z=.1;});
+        }
+        boxes.forEach(object=>{
+          if(object.userData.float!==undefined)object.position.y+=Math.sin(time*.0008+object.userData.float)*.0008;
+        });
+        candles.forEach((light,index)=>{if(lampOn)light.intensity=4+Math.sin(time*.002+index)*.7;});
+        renderer.render(scene,camera);
+      }
+      requestAnimationFrame(animate);
+    })();
+  </script>
+</body>
+</html>
